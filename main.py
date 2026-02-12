@@ -129,7 +129,8 @@ class Database:
                 if last:
                     try:
                         settings.last_checked = datetime.fromisoformat(last)
-                    except:
+                    except Exception as e:
+                        print(f"Exception is ignored at load_settings: {e}")
                         settings.last_checked = None
 
     @staticmethod
@@ -675,7 +676,8 @@ async def send_digest(callback: CallbackQuery):
                 try:
                     dt = datetime.fromisoformat(published)
                     date_str = dt.strftime("%d.%m.%Y %H:%M")
-                except:
+                except Exception as e:
+                    print(f"Exception is ignored at send_digest: {e}")
                     date_str = published[:16]
             else:
                 date_str = "Неизвестно"
