@@ -1,4 +1,4 @@
-aiogram
-aiosqlite
-feedparser
-dotenv
+aiogram=3.25.0
+aiosqlite=0.22.1
+feedparser=6.0.12
+python-dotenv=1.2.1
