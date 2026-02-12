@@ -298,17 +298,17 @@ async def parse_feed():
         if feed.bozo:
             logging.warning(f"Bozo: {feed.bozo_exception}")
 
-        for entry in feed.entries:
-            async with aiosqlite.connect(DB_NAME) as db:
+        async with aiosqlite.connect(DB_NAME) as db:     
+            for entry in feed.entries:
                 cursor = await db.execute(
                     "SELECT id FROM news WHERE guid = ?", (entry.get("id", entry.link),)
                 )
                 if await cursor.fetchone():
                     continue
 
-            text = f"{entry.get('title', '')} {entry.get('summary', '')}"
-            info = check_patterns(text)
-            await Database.save_news(entry, info)
+                text = f"{entry.get('title', '')} {entry.get('summary', '')}"
+                info = check_patterns(text)
+                await Database.save_news(entry, info)
 
         settings.last_checked = datetime.now()
         await Database.save_settings()
