@@ -21,6 +21,7 @@ from aiogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     Message,
+    InaccessibleMessage,
 )
 
 load_dotenv()
@@ -232,7 +233,8 @@ class Database:
     async def get_stats():
         async with aiosqlite.connect(DB_NAME) as db:
             cursor = await db.execute("SELECT COUNT(*) FROM news WHERE is_relevant = 1")
-            total = (await cursor.fetchone())[0]
+            row = await cursor.fetchone()
+            total = row[0] if row else 0
 
             cursor = await db.execute("""
                 SELECT 
@@ -404,11 +406,15 @@ async def cmd_start(message: Message):
 
 @dp.callback_query(F.data == "main_menu")
 async def main_menu_cb(callback: CallbackQuery):
-    await callback.message.edit_text(
-        "📱 *Главное меню*", parse_mode="Markdown", reply_markup=main_kb
-    )
-    await callback.answer()
+    message = callback.message
 
+    if isinstance(message, Message):
+        await message.edit_text(
+            "📱 *Главное меню*", parse_mode="Markdown", reply_markup=main_kb
+        )
+        await callback.answer()
+    elif isinstance(message, InaccessibleMessage):
+        return
 
 # ---------- Настройки паттернов ----------
 @dp.callback_query(F.data == "menu_patterns")
@@ -419,35 +425,43 @@ async def menu_patterns(callback: CallbackQuery):
         f"🟡 Минорных: {len(settings.minor_patterns)}\n"
         f"🎯 Порог: {settings.min_minor_required}"
     )
-    await callback.message.edit_text(
-        text, parse_mode="Markdown", reply_markup=patterns_kb
-    )
-    await callback.answer()
+    if isinstance(callback.message, Message):
+        await callback.message.edit_text(
+            text, parse_mode="Markdown", reply_markup=patterns_kb
+        )
+        await callback.answer()
+    else:
+        pass
 
 
 @dp.callback_query(F.data == "add_minor")
 async def add_minor_cb(callback: CallbackQuery, state: FSMContext):
-    await callback.message.edit_text(
-        "➕ *Добавление минорного паттерна*\nОтправь регулярное выражение.\n❌ /cancel",
-        parse_mode="Markdown",
-    )
-    await state.set_state(PatternStates.add_minor)
-    await callback.answer()
+    if isinstance(callback.message, Message):
+        await callback.message.edit_text(
+            "➕ *Добавление минорного паттерна*\nОтправь регулярное выражение.\n❌ /cancel",
+            parse_mode="Markdown",
+        )
+        await state.set_state(PatternStates.add_minor)
+        await callback.answer()
 
 
 @dp.callback_query(F.data == "add_major")
 async def add_major_cb(callback: CallbackQuery, state: FSMContext):
-    await callback.message.edit_text(
-        "➕ *Добавление мажорного паттерна*\nОтправь регулярное выражение.\n❌ /cancel",
-        parse_mode="Markdown",
-    )
-    await state.set_state(PatternStates.add_major)
-    await callback.answer()
+    if isinstance(callback.message, Message):
+        await callback.message.edit_text(
+            "➕ *Добавление мажорного паттерна*\nОтправь регулярное выражение.\n❌ /cancel",
+            parse_mode="Markdown",
+        )
+        await state.set_state(PatternStates.add_major)
+        await callback.answer()
 
 
 @dp.message(PatternStates.add_minor)
 async def process_add_minor(message: Message, state: FSMContext):
-    pattern = message.text.strip()
+    pattern = ""
+    if message.text:
+        pattern: str = message.text.strip()
+
     try:
         re.compile(pattern)
     except re.error:
@@ -465,7 +479,10 @@ async def process_add_minor(message: Message, state: FSMContext):
 
 @dp.message(PatternStates.add_major)
 async def process_add_major(message: Message, state: FSMContext):
-    pattern = message.text.strip()
+    pattern = ""
+    if message.text:
+        pattern = message.text.strip()
+
     try:
         re.compile(pattern)
     except re.error:
@@ -504,12 +521,13 @@ async def delete_menu(callback: CallbackQuery, state: FSMContext):
     kb_buttons.append(
         [InlineKeyboardButton(text="⬅️ Назад", callback_data="menu_patterns")]
     )
-    await callback.message.edit_text(
-        "❌ *Удаление паттернов*\nВыбери тип для удаления:",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=kb_buttons),
-    )
-    await callback.answer()
+    if isinstance(callback.message, Message):
+        await callback.message.edit_text(
+            "❌ *Удаление паттернов*\nВыбери тип для удаления:",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=kb_buttons),
+        )
+        await callback.answer()
 
 
 async def delete_pattern_flow(
@@ -535,13 +553,14 @@ async def delete_pattern_flow(
     buttons.append(
         [InlineKeyboardButton(text="⬅️ Отмена", callback_data="menu_patterns")]
     )
-    await callback.message.edit_text(
-        f"Выбери {pattern_type} паттерн для удаления:",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons),
-    )
-    await state.update_data(del_type=pattern_type)
-    await state.set_state(PatternStates.delete_pattern)
-    await callback.answer()
+    if isinstance(callback.message, Message):
+        await callback.message.edit_text(
+            f"Выбери {pattern_type} паттерн для удаления:",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons),
+        )
+        await state.update_data(del_type=pattern_type)
+        await state.set_state(PatternStates.delete_pattern)
+        await callback.answer()
 
 
 @dp.callback_query(F.data == "delete_major")
@@ -556,7 +575,11 @@ async def delete_minor_cb(callback: CallbackQuery, state: FSMContext):
 
 @dp.callback_query(PatternStates.delete_pattern, F.data.startswith("del_"))
 async def delete_pattern_execute(callback: CallbackQuery, state: FSMContext):
-    _, typ, idx_str = callback.data.split("_")
+    if callback.data is None:
+        print("Callback data is missing at delete_pattern_execute, skipping...")
+        return
+    
+    _, typ, idx_str = callback.data.split("_", maxsplit=2)
     idx = int(idx_str)
     data = await state.get_data()
     if data.get("del_type") != typ:
@@ -567,13 +590,20 @@ async def delete_pattern_execute(callback: CallbackQuery, state: FSMContext):
         deleted = patterns.pop(idx)
         await Database.save_settings()
         restart_parsing()
-        await callback.message.edit_text(
-            f"✅ Удалён: `{deleted}`", parse_mode="Markdown", reply_markup=patterns_kb
-        )
+        if isinstance(callback.message, Message):
+            await callback.message.edit_text(
+                f"✅ Удалён: `{deleted}`", parse_mode="Markdown", reply_markup=patterns_kb
+            )
+        else:
+            pass
     else:
-        await callback.message.edit_text(
-            "❌ Паттерн не найден", reply_markup=patterns_kb
-        )
+        if isinstance(callback.message, Message):
+            await callback.message.edit_text(
+                "❌ Паттерн не найден", reply_markup=patterns_kb
+            )
+        else:
+            pass
+
     await state.clear()
     await callback.answer()
 
@@ -581,17 +611,22 @@ async def delete_pattern_execute(callback: CallbackQuery, state: FSMContext):
 # ---------- Порог ----------
 @dp.callback_query(F.data == "set_threshold")
 async def set_threshold_cb(callback: CallbackQuery, state: FSMContext):
-    await callback.message.edit_text(
-        f"🎯 *Порог минорных*\nТекущее: {settings.min_minor_required}\n"
-        "Отправь новое число (>=1):\n❌ /cancel",
-        parse_mode="Markdown",
-    )
-    await state.set_state(PatternStates.set_threshold)
-    await callback.answer()
+    if isinstance(callback.message, Message):
+        await callback.message.edit_text(
+            f"🎯 *Порог минорных*\nТекущее: {settings.min_minor_required}\n"
+            "Отправь новое число (>=1):\n❌ /cancel",
+            parse_mode="Markdown",
+        )
+        await state.set_state(PatternStates.set_threshold)
+        await callback.answer()
 
 
 @dp.message(PatternStates.set_threshold)
 async def process_threshold(message: Message, state: FSMContext):
+    if message.text is None:
+        await message.answer("Напишите что-нибудь...")
+        return
+    
     try:
         val = int(message.text.strip())
         if val < 1:
@@ -626,32 +661,38 @@ async def show_all(callback: CallbackQuery):
     text += f"\n🎯 *Порог:* {settings.min_minor_required}"
 
     await callback.answer()  # сразу отвечаем, чтобы убрать "часики"
-    await callback.message.answer(text, parse_mode="Markdown")
+    if callback.message:
+        await callback.message.answer(text, parse_mode="Markdown")
 
 
 # ---------- Дайджест ----------
 @dp.callback_query(F.data == "digest_menu")
 async def digest_menu_cb(callback: CallbackQuery):
     stats = await Database.get_stats()
-    await callback.message.edit_text(
-        f"📰 *Дайджест*\n\n"
-        f"📊 Всего: {stats['total']}\n"
-        f"• За сегодня: {stats['today']}\n"
-        f"• За неделю: {stats['week']}\n"
-        f"• За месяц: {stats['month']}",
-        parse_mode="Markdown",
-        reply_markup=digest_kb,
-    )
-    await callback.answer()
+    if isinstance(callback.message, Message):
+        await callback.message.edit_text(
+            f"📰 *Дайджест*\n\n"
+            f"📊 Всего: {stats['total']}\n"
+            f"• За сегодня: {stats['today']}\n"
+            f"• За неделю: {stats['week']}\n"
+            f"• За месяц: {stats['month']}",
+            parse_mode="Markdown",
+            reply_markup=digest_kb,
+        )
+        await callback.answer()
 
 
 @dp.callback_query(F.data.startswith("digest_"))
 async def send_digest(callback: CallbackQuery):
+    if callback.data is None:
+        await callback.answer("❌ Ошибка: данные не найдены")
+        return
+    
     period = callback.data.replace("digest_", "")
     await callback.answer("🔍 Формирую дайджест...")
     news_list = await Database.get_digest(period)
 
-    if not news_list:
+    if not news_list and callback.message:
         await callback.message.answer("📭 Новостей за этот период нет.")
         return
 
@@ -705,45 +746,47 @@ async def send_digest(callback: CallbackQuery):
 
         try:
             document = FSInputFile(tmp_path, filename=f"digest_{period}.txt")
-            await callback.message.answer_document(
-                document,
-                caption=f"📰 *Дайджест {name}* ({len(news_list)} нов.)",
-                parse_mode="Markdown",
-            )
+            if callback.message:
+                await callback.message.answer_document(
+                    document,
+                    caption=f"📰 *Дайджест {name}* ({len(news_list)} нов.)",
+                    parse_mode="Markdown",
+                )
         finally:
             os.unlink(tmp_path)
 
     if len(news_list) <= 5:
         # Отправляем текстом (как и раньше)
-        await callback.message.answer(
-            f"📰 *ДАЙДЖЕСТ {name}* — {len(news_list)}", parse_mode="Markdown"
-        )
-        for news in news_list:
-            if news["major_count"] > 0:
-                emoji = "🔴"
-            elif news["minor_count"] >= 3:
-                emoji = "🟠"
-            else:
-                emoji = "🟡"
-
-            patterns_desc = []
-            if news["major_count"]:
-                patterns_desc.append(f"маж: {news['major_count']}")
-            if news["minor_count"]:
-                patterns_desc.append(f"мин: {news['minor_count']}")
-            pat_str = f"({', '.join(patterns_desc)})" if patterns_desc else ""
-
-            msg = (
-                f"{emoji} *{news['title']}*\n"
-                f"{news['summary'][:200]}...\n"
-                f"{pat_str}\n"
-                f"[🔗 Читать]({news['link']})\n"
-                f"{'─' * 30}"
-            )
+        if callback.message:
             await callback.message.answer(
-                msg, parse_mode="Markdown", disable_web_page_preview=True
+                f"📰 *ДАЙДЖЕСТ {name}* — {len(news_list)}", parse_mode="Markdown"
             )
-            await asyncio.sleep(0.3)
+            for news in news_list:
+                if news["major_count"] > 0:
+                    emoji = "🔴"
+                elif news["minor_count"] >= 3:
+                    emoji = "🟠"
+                else:
+                    emoji = "🟡"
+
+                patterns_desc = []
+                if news["major_count"]:
+                    patterns_desc.append(f"маж: {news['major_count']}")
+                if news["minor_count"]:
+                    patterns_desc.append(f"мин: {news['minor_count']}")
+                pat_str = f"({', '.join(patterns_desc)})" if patterns_desc else ""
+
+                msg = (
+                    f"{emoji} *{news['title']}*\n"
+                    f"{news['summary'][:200]}...\n"
+                    f"{pat_str}\n"
+                    f"[🔗 Читать]({news['link']})\n"
+                    f"{'─' * 30}"
+                )
+                await callback.message.answer(
+                    msg, parse_mode="Markdown", disable_web_page_preview=True
+                )
+                await asyncio.sleep(0.3)
 
 
 # ---------- Статистика ----------
@@ -760,8 +803,9 @@ async def stats_cb(callback: CallbackQuery):
         f"• Мажорных: {s['major_count']}\n"
         f"• Минорных: {s['minor_count']}"
     )
-    await callback.message.edit_text(text, parse_mode="Markdown", reply_markup=main_kb)
-    await callback.answer()
+    if isinstance(callback.message, Message):
+        await callback.message.edit_text(text, parse_mode="Markdown", reply_markup=main_kb)
+        await callback.answer()
 
 
 # ---------- Отмена ----------
