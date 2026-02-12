@@ -713,9 +713,7 @@ async def send_digest(callback: CallbackQuery):
     }
     name = period_names.get(period, "")
 
-    # Если новостей больше 5 — отправляем файлом, иначе — текстом в чат
     if len(news_list) > 0:
-        # Формируем текстовый файл
         content = f"ДАЙДЖЕСТ {name}\n"
         content += f"Всего новостей: {len(news_list)}\n"
         content += "=" * 50 + "\n\n"
@@ -746,7 +744,6 @@ async def send_digest(callback: CallbackQuery):
                 content += "\n"
             content += "-" * 50 + "\n\n"
 
-        # Создаём временный файл
         with tempfile.NamedTemporaryFile(
             mode="w", encoding="utf-8", suffix=".txt", delete=False
         ) as f:
@@ -765,7 +762,6 @@ async def send_digest(callback: CallbackQuery):
             os.unlink(tmp_path)
 
     if len(news_list) <= 5:
-        # Отправляем текстом (как и раньше)
         if callback.message:
             await callback.message.answer(
                 f"📰 *ДАЙДЖЕСТ {name}* — {len(news_list)}", parse_mode="Markdown"
