@@ -9,7 +9,6 @@ from typing import Dict, List, Optional
 
 import aiosqlite
 import feedparser
-from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -18,11 +17,12 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import (
     CallbackQuery,
     FSInputFile,
+    InaccessibleMessage,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     Message,
-    InaccessibleMessage,
 )
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -301,7 +301,7 @@ async def parse_feed():
         if feed.bozo:
             logging.warning(f"Bozo: {feed.bozo_exception}")
 
-        async with aiosqlite.connect(DB_NAME) as db:     
+        async with aiosqlite.connect(DB_NAME) as db:
             for entry in feed.entries:
                 cursor = await db.execute(
                     "SELECT id FROM news WHERE guid = ?", (entry.get("id", entry.link),)
@@ -415,6 +415,7 @@ async def main_menu_cb(callback: CallbackQuery):
         await callback.answer()
     elif isinstance(message, InaccessibleMessage):
         return
+
 
 # ---------- Настройки паттернов ----------
 @dp.callback_query(F.data == "menu_patterns")
@@ -578,7 +579,7 @@ async def delete_pattern_execute(callback: CallbackQuery, state: FSMContext):
     if callback.data is None:
         print("Callback data is missing at delete_pattern_execute, skipping...")
         return
-    
+
     _, typ, idx_str = callback.data.split("_", maxsplit=2)
     idx = int(idx_str)
     data = await state.get_data()
@@ -592,7 +593,9 @@ async def delete_pattern_execute(callback: CallbackQuery, state: FSMContext):
         restart_parsing()
         if isinstance(callback.message, Message):
             await callback.message.edit_text(
-                f"✅ Удалён: `{deleted}`", parse_mode="Markdown", reply_markup=patterns_kb
+                f"✅ Удалён: `{deleted}`",
+                parse_mode="Markdown",
+                reply_markup=patterns_kb,
             )
         else:
             pass
@@ -626,7 +629,7 @@ async def process_threshold(message: Message, state: FSMContext):
     if message.text is None:
         await message.answer("Напишите что-нибудь...")
         return
-    
+
     try:
         val = int(message.text.strip())
         if val < 1:
@@ -634,6 +637,7 @@ async def process_threshold(message: Message, state: FSMContext):
     except ValueError:
         await message.answer("❌ Введи целое число >=1")
         return
+
     settings.min_minor_required = val
     await Database.save_settings()
     restart_parsing()
@@ -687,7 +691,7 @@ async def send_digest(callback: CallbackQuery):
     if callback.data is None:
         await callback.answer("❌ Ошибка: данные не найдены")
         return
-    
+
     period = callback.data.replace("digest_", "")
     await callback.answer("🔍 Формирую дайджест...")
     news_list = await Database.get_digest(period)
@@ -804,7 +808,9 @@ async def stats_cb(callback: CallbackQuery):
         f"• Минорных: {s['minor_count']}"
     )
     if isinstance(callback.message, Message):
-        await callback.message.edit_text(text, parse_mode="Markdown", reply_markup=main_kb)
+        await callback.message.edit_text(
+            text, parse_mode="Markdown", reply_markup=main_kb
+        )
         await callback.answer()
 
 
