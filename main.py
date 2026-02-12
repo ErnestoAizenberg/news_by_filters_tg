@@ -23,7 +23,7 @@ from aiogram.types import (
 )
 
 # ===================== КОНФИГУРАЦИЯ =====================
-TELEGRAM_TOKEN = "8569814463:AAG3TWwMeIqIbn7SZY2VN3Kn7TJmq5JeJ04"
+TELEGRAM_TOKEN = "YOUR_TOKEN_HERE"
 DB_NAME = "rss_bot.db"
 CHECK_INTERVAL = 300
 DEFAULT_MIN_MINOR = 1
