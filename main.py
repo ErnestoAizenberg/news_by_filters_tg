@@ -701,15 +701,15 @@ async def send_digest(callback: CallbackQuery):
             f.write(content)
             tmp_path = f.name
 
-        # Отправляем файл
-        document = FSInputFile(tmp_path, filename=f"digest_{period}.txt")
-        await callback.message.answer_document(
-            document,
-            caption=f"📰 *Дайджест {name}* ({len(news_list)} нов.)",
-            parse_mode="Markdown",
-        )
-        # Удаляем временный файл
-        os.unlink(tmp_path)
+        try:
+            document = FSInputFile(tmp_path, filename=f"digest_{period}.txt")
+            await callback.message.answer_document(
+                document,
+                caption=f"📰 *Дайджест {name}* ({len(news_list)} нов.)",
+                parse_mode="Markdown",
+            )
+        finally:
+            os.unlink(tmp_path)
 
     if len(news_list) <= 5:
         # Отправляем текстом (как и раньше)
