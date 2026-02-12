@@ -9,6 +9,7 @@ from typing import Dict, List, Optional
 
 import aiosqlite
 import feedparser
+from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -22,8 +23,10 @@ from aiogram.types import (
     Message,
 )
 
+load_dotenv()
+
 # ===================== КОНФИГУРАЦИЯ =====================
-TELEGRAM_TOKEN = "YOUR_TOKEN_HERE"
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")
 DB_NAME = "rss_bot.db"
 CHECK_INTERVAL = 300
 DEFAULT_MIN_MINOR = 1
