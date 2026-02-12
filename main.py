@@ -459,9 +459,14 @@ async def add_major_cb(callback: CallbackQuery, state: FSMContext):
 
 @dp.message(PatternStates.add_minor)
 async def process_add_minor(message: Message, state: FSMContext):
-    pattern = ""
-    if message.text:
-        pattern: str = message.text.strip()
+
+    if not message.text:
+        await message.answer(
+            "❌ Пустой паттерн. Отправь текст с регулярным выражением."
+        )
+        return
+
+    pattern: str = message.text.strip()
 
     try:
         re.compile(pattern)
