@@ -590,7 +590,12 @@ async def delete_pattern_execute(callback: CallbackQuery, state: FSMContext):
         return
 
     _, typ, idx_str = callback.data.split("_", maxsplit=2)
-    idx = int(idx_str)
+
+    try:
+        idx = int(idx_str)
+    except ValueError:
+        await callback.answer("Ошибка: неверный индекс", show_alert=True)
+
     data = await state.get_data()
     if data.get("del_type") != typ:
         await callback.answer("Ошибка", show_alert=True)
