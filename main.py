@@ -29,7 +29,7 @@ load_dotenv()
 # ===================== КОНФИГУРАЦИЯ =====================
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 if not TELEGRAM_TOKEN:
-    raise RuntimeError("TELEGRAM_TOKEN enviroment variable is not set")
+    raise RuntimeError("TELEGRAM_TOKEN environment variable is not set")
 
 DB_NAME = "rss_bot.db"
 CHECK_INTERVAL = 300
