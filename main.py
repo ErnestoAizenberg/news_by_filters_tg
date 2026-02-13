@@ -489,9 +489,13 @@ async def process_add_minor(message: Message, state: FSMContext):
 
 @dp.message(PatternStates.add_major)
 async def process_add_major(message: Message, state: FSMContext):
-    pattern = ""
-    if message.text:
-        pattern = message.text.strip()
+    if not message.text:
+        await message.answer(
+            "❌ Пустой паттерн. Отправь текст с регулярным выражением."
+        )
+        return
+
+    pattern = message.text.strip()
 
     try:
         re.compile(pattern)
@@ -595,11 +599,13 @@ async def delete_pattern_execute(callback: CallbackQuery, state: FSMContext):
         idx = int(idx_str)
     except ValueError:
         await callback.answer("Ошибка: неверный индекс", show_alert=True)
+        return
 
     data = await state.get_data()
     if data.get("del_type") != typ:
         await callback.answer("Ошибка", show_alert=True)
         return
+
     patterns = settings.major_patterns if typ == "major" else settings.minor_patterns
     if 0 <= idx < len(patterns):
         deleted = patterns.pop(idx)
