@@ -274,7 +274,6 @@ def check_patterns(text: str) -> Dict:
             "minor_count": 0,
             "matched_patterns": [],
         }
-    text = text.lower()
     matched = []
     major = 0
     minor = 0
