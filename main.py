@@ -159,7 +159,7 @@ class Database:
                 guid = entry.get("id", entry.link)
                 title = entry.get("title", "")
                 summary = entry.get("summary", "")
-                link = entry.link
+                link = entry.get("link", "")
                 published = entry.get("published", "")
                 if hasattr(published, "isoformat"):
                     published = published.isoformat()
