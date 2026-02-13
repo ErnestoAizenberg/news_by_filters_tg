@@ -1,0 +1,18 @@
+{
+  // Python-specific settings
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+  
+  // Global Ruff settings
+  "ruff.enable": true,
+  "ruff.formatOnSave": true,
+  "ruff.organizeImports": true,
+  "ruff.fixAll": true
+}
