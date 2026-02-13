@@ -133,7 +133,7 @@ class Database:
                 if last:
                     try:
                         settings.last_checked = datetime.fromisoformat(last)
-                    except (ValueError, TypeError):
+                    except (ValueError, TypeError) as e:
                         print(f"Exception is ignored at load_settings: {e}")
                         settings.last_checked = None
 
@@ -300,7 +300,9 @@ def check_patterns(text: str) -> Dict:
 async def parse_feed():
     logging.info("Парсинг RSS...")
     try:
-        feed = feedparser.parse(settings.rss_url)
+        loop = asyncio.get_event_loop()
+        feed = await loop.run_in_executor(None, feedparser.parse, settings.rss_url)
+
         if feed.bozo:
             logging.warning(f"Bozo: {feed.bozo_exception}")
 
