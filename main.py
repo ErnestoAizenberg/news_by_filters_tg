@@ -133,7 +133,7 @@ class Database:
                 if last:
                     try:
                         settings.last_checked = datetime.fromisoformat(last)
-                    except Exception as e:
+                    except (ValueError, TypeError):
                         print(f"Exception is ignored at load_settings: {e}")
                         settings.last_checked = None
 
