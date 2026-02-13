@@ -299,7 +299,7 @@ def check_patterns(text: str) -> Dict:
 async def parse_feed():
     logging.info("Парсинг RSS...")
     try:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         feed = await loop.run_in_executor(None, feedparser.parse, settings.rss_url)
 
         if feed.bozo:
