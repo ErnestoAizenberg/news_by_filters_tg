@@ -1,10 +1,11 @@
 import asyncio
+import calendar
 import json
 import logging
 import os
 import re
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 import aiosqlite
@@ -163,11 +164,17 @@ class Database:
                 title = entry.get("title", "")
                 summary = entry.get("summary", "")
                 link = entry.get("link", "")
-                published = entry.get("published", "")
-                if hasattr(published, "isoformat"):
-                    published = published.isoformat()
+                published_iso = ""
+                if hasattr(entry, "published_parsed") and entry.published_parsed:
+                    dt = datetime.fromtimestamp(
+                        calendar.timegm(entry.published_parsed), tz=timezone.utc
+                    )
+                    published_iso = dt.isoformat()
                 else:
-                    published = str(published)
+                    # Fallback: use the raw string (rare)
+                    published_raw = entry.get("published", "")
+                    if published_raw:
+                        published_iso = published_raw
 
                 patterns_str = (
                     "; ".join(pattern_info["matched_patterns"])
@@ -186,7 +193,7 @@ class Database:
                         title,
                         summary,
                         link,
-                        published,
+                        published_iso,
                         pattern_info["is_relevant"],
                         pattern_info["major_count"],
                         pattern_info["minor_count"],
