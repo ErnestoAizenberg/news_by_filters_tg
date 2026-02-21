@@ -352,42 +352,58 @@ main_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         [
             InlineKeyboardButton(
-                text="⚙️ Настройки паттернов", callback_data="menu_patterns"
+                text="⚙️ НАСТРОЙКА ПАТТЕРНОВ", callback_data="menu_patterns"
             )
         ],
         [
             InlineKeyboardButton(
-                text="📰 Получить дайджест", callback_data="digest_menu"
+                text="📰 ПОЛУЧИТЬ ДАЙДЖЕСТ", callback_data="digest_menu"
             )
         ],
-        [InlineKeyboardButton(text="📊 Статистика", callback_data="stats")],
+        [InlineKeyboardButton(text="📊 СТАТИСТИКА", callback_data="stats")],
     ]
 )
 
 patterns_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         [
-            InlineKeyboardButton(text="➕ Минорный", callback_data="add_minor"),
-            InlineKeyboardButton(text="➕ Мажорный", callback_data="add_major"),
+            InlineKeyboardButton(
+                text="✅ ДОБАВИТЬ МИНОРНЫЙ", callback_data="add_minor"
+            ),
+            InlineKeyboardButton(
+                text="✅ ДОБАВИТЬ МАЖОРНЫЙ", callback_data="add_major"
+            ),
         ],
-        [InlineKeyboardButton(text="❌ Удалить паттерн", callback_data="delete_menu")],
-        [InlineKeyboardButton(text="🎯 Порог", callback_data="set_threshold")],
-        [InlineKeyboardButton(text="📋 Показать все", callback_data="show_all")],
-        [InlineKeyboardButton(text="⬅️ Назад", callback_data="main_menu")],
+        [
+            InlineKeyboardButton(text="📋 ПОКАЗАТЬ ВСЕ", callback_data="show_all"),
+            InlineKeyboardButton(
+                text="🎯 ПОРОГ СРАБАТЫВАНИЯ", callback_data="set_threshold"
+            ),
+        ],
+        [
+            InlineKeyboardButton(
+                text="❌ УДАЛИТЬ ПАТТЕРН", callback_data="delete_menu"
+            ),
+        ],
+        [
+            InlineKeyboardButton(text="🔙 В ГЛАВНОЕ МЕНЮ", callback_data="main_menu"),
+        ],
     ]
 )
 
 digest_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         [
-            InlineKeyboardButton(text="🇾 Сегодня", callback_data="digest_today"),
-            InlineKeyboardButton(text="🇼 Неделя", callback_data="digest_week"),
+            InlineKeyboardButton(text="📅 СЕГОДНЯ", callback_data="digest_today"),
+            InlineKeyboardButton(text="📅 ЗА НЕДЕЛЮ", callback_data="digest_week"),
         ],
         [
-            InlineKeyboardButton(text="🇲 Месяц", callback_data="digest_month"),
-            InlineKeyboardButton(text="📅 Всё", callback_data="digest_all"),
+            InlineKeyboardButton(text="📅 ЗА МЕСЯЦ", callback_data="digest_month"),
+            InlineKeyboardButton(text="📅 ВСЕ ВРЕМЯ", callback_data="digest_all"),
         ],
-        [InlineKeyboardButton(text="⬅️ Назад", callback_data="main_menu")],
+        [
+            InlineKeyboardButton(text="🔙 В ГЛАВНОЕ МЕНЮ", callback_data="main_menu"),
+        ],
     ]
 )
 
@@ -399,10 +415,7 @@ dp = Dispatcher(storage=MemoryStorage())
 @dp.message(Command("start"))
 async def cmd_start(message: Message):
     await message.answer(
-        "🌟 *RSS коллектор*\n\n"
-        "Я собираю новости из RSS, фильтрую по общим паттернам.\n"
-        "Настройки едины для всех. Дайджест запрашиваешь сам.\n\n"
-        "Выбери действие:",
+        "📱 *Главное меню*",
         parse_mode="Markdown",
         reply_markup=main_kb,
     )
