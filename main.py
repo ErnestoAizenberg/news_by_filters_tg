@@ -346,6 +346,7 @@ class PatternStates(StatesGroup):
     set_threshold = State()
     delete_pattern = State()
 
+
 # ===================== КЛАВИАТУРЫ =====================
 main_kb = InlineKeyboardMarkup(
     inline_keyboard=[
@@ -359,26 +360,30 @@ main_kb = InlineKeyboardMarkup(
                 text="📰 ПОЛУЧИТЬ ДАЙДЖЕСТ", callback_data="digest_menu"
             )
         ],
-        [
-            InlineKeyboardButton(
-                text="📊 СТАТИСТИКА", callback_data="stats"
-            )
-        ],
+        [InlineKeyboardButton(text="📊 СТАТИСТИКА", callback_data="stats")],
     ]
 )
 
 patterns_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         [
-            InlineKeyboardButton(text="✅ ДОБАВИТЬ МИНОРНЫЙ", callback_data="add_minor"),
-            InlineKeyboardButton(text="✅ ДОБАВИТЬ МАЖОРНЫЙ", callback_data="add_major"),
+            InlineKeyboardButton(
+                text="✅ ДОБАВИТЬ МИНОРНЫЙ", callback_data="add_minor"
+            ),
+            InlineKeyboardButton(
+                text="✅ ДОБАВИТЬ МАЖОРНЫЙ", callback_data="add_major"
+            ),
         ],
         [
             InlineKeyboardButton(text="📋 ПОКАЗАТЬ ВСЕ", callback_data="show_all"),
-            InlineKeyboardButton(text="🎯 ПОРОГ СРАБАТЫВАНИЯ", callback_data="set_threshold"),
+            InlineKeyboardButton(
+                text="🎯 ПОРОГ СРАБАТЫВАНИЯ", callback_data="set_threshold"
+            ),
         ],
         [
-            InlineKeyboardButton(text="❌ УДАЛИТЬ ПАТТЕРН", callback_data="delete_menu"),
+            InlineKeyboardButton(
+                text="❌ УДАЛИТЬ ПАТТЕРН", callback_data="delete_menu"
+            ),
         ],
         [
             InlineKeyboardButton(text="🔙 В ГЛАВНОЕ МЕНЮ", callback_data="main_menu"),
